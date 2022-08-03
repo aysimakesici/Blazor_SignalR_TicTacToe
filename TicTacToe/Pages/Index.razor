@@ -1,0 +1,205 @@
+﻿@page "/"
+
+@using Extensions;
+@using System.Threading;
+@using Data;
+@using Microsoft.AspNetCore.SignalR.Client;
+@using Hubs;
+
+@inject NavigationManager NavigationManager
+@inject GameModelService GameModelService
+@inject GameHub GameHub
+@inject IJSRuntime JSRuntime
+
+<style>
+    .tttbutton {
+        height: 100px;
+        width: 100px;
+        margin: 5px;
+    }
+
+    .tttfont {
+        font-size: 60px;
+    }
+
+    .btn:focus {
+        outline: none;
+    }
+
+    .first-row {
+        padding-top: 10px;
+    }
+
+    .win-message {
+        margin-top: 1%;
+    }
+
+    .new-game-buttons {
+        margin-top: 1%;
+    }
+
+    .alert-custom {
+        background-color: #69e649;
+        color: #fff;
+    }
+</style>
+
+<h1>Tic Tac Toe</h1>
+<hr />
+
+<div class="container">
+    <div class="row">
+        @if (_gamesettings.PlayerXTurn)
+        {
+            <div class="alert alert-light" role="alert">Player X Turn</div>
+        }
+        @if (_gamesettings.PlayerOTurn)
+        {
+            <div class="alert alert-light" role="alert">Player O Turn</div>
+        }
+    </div>
+    <div class="row win-message">
+        @if (_gamesettings.OWon)
+        {
+            <div class="alert alert-custom" role="alert"><strong>Game Over:</strong> Player O has won the game!</div>
+        }
+        @if (_gamesettings.XWon)
+        {
+            <div class="alert alert-custom" role="alert"><strong>Game Over:</strong> Player X has won the game!</div>
+        }
+        @if (_gamesettings.CatGame)
+        {
+            <div class="alert alert-custom" role="alert"><strong>Game Over:</strong> Cat game! Everyone wins!</div>
+        }
+    </div>
+    <div class="game-board">
+        <div class="row first-row">
+            <button id="btn1" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(0))">@_gamesettings.Game[0]</button>
+            <button id="btn2" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(1))">@_gamesettings.Game[1]</button>
+            <button id="btn3" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(2))">@_gamesettings.Game[2]</button>
+        </div>
+        <div class="row">
+            <button id="btn1" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(3))">@_gamesettings.Game[3]</button>
+            <button id="btn2" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(4))">@_gamesettings.Game[4]</button>
+            <button id="btn3" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(5))">@_gamesettings.Game[5]</button>
+        </div>
+        <div class="row">
+            <button id="btn1" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(6))">@_gamesettings.Game[6]</button>
+            <button id="btn2" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(7))">@_gamesettings.Game[7]</button>
+            <button id="btn3" class="btn btn-outline-info tttbutton tttfont" @onclick="(() => GameClick(8))">@_gamesettings.Game[8]</button>
+        </div>
+    </div>
+    <div class="row new-game-buttons">
+        <button id="btn-new-game" class="btn btn-primary m-1" @onclick="NewBotGameClick">New Player vs Bot Game</button>
+        <button id="btn-new-game" class="btn btn-primary m-1" @onclick="NewHumanGameClick">New Player vs Human Game</button>
+    </div>
+    <div class="row">
+        <span>Connection State = @_hubConnection.State</span>
+    </div>
+    @*logging for debugging*@
+    @*<div class="row" style="font-family: monospace;">
+        <ul>
+            @foreach (var message in messages)
+            {
+                <li>@message</li>
+            }
+        </ul>
+    </div>*@
+</div>
+
+@code {
+
+    private HubConnection _hubConnection;
+    private GameModel _gamesettings;
+
+    protected List<string> messages = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _gamesettings = await GameModelService.GetHumanGameBoardAsync();
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
+            .Build();
+
+        _hubConnection.On<GameModel>(ClientEndpoints.ReceiveMessage, (gamesettings) =>
+        {
+            _gamesettings = gamesettings;
+            StateHasChanged();
+        });
+
+        _hubConnection.On<GameModel>(ClientEndpoints.EndTurn, async (gamesettings) =>
+        {
+            if (gamesettings.Botturn)
+            {
+                await this.Write($"Turn {gamesettings.TurnCount} - Human Turn Over");
+            }
+            else
+            {
+                await this.Write($"Turn {gamesettings.TurnCount} - Bot Turn Over.");
+
+            }
+
+            await this.Write(Newtonsoft.Json.JsonConvert.SerializeObject(gamesettings.Game, Newtonsoft.Json.Formatting.None));
+
+            if (!gamesettings.Gameover)
+            {
+                _gamesettings = gamesettings;
+                StateHasChanged();
+                if (_gamesettings.Botturn)
+                {
+
+                    await DoBotTurn();
+                }
+            }
+        });
+
+        _hubConnection.On<GameModel>(ClientEndpoints.NewHumanGame, (gamesettings) =>
+        {
+            _gamesettings = gamesettings;
+            StateHasChanged();
+        });
+
+        _hubConnection.On<GameModel>(ClientEndpoints.NewBotGame, async (gamesettings) =>
+        {
+            this.messages.Clear();
+            await this.Write($"Starting New Bot Game");
+            _gamesettings = gamesettings;
+            StateHasChanged();
+        });
+
+        _hubConnection.On<GameModel>(ClientEndpoints.GameOver, async (gamesettings) =>
+        {
+            await this.Write($"Turn {gamesettings.TurnCount} - Game Over.");
+            await this.Write(Newtonsoft.Json.JsonConvert.SerializeObject(gamesettings.Game, Newtonsoft.Json.Formatting.None));
+            _gamesettings = gamesettings;
+            StateHasChanged();
+        });
+
+
+        await _hubConnection.StartAsync();
+    }
+
+    private async Task Write(string message)
+    {
+        this.messages.Add(message);
+        await this.JSRuntime.InvokeVoidAsync("console.log", message);
+    }
+
+    public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
+    Task Send() => _hubConnection.SendAsync(ServerEndpoints.SendMessage, _gamesettings);
+    Task DoBotTurn() => _hubConnection.SendAsync(ServerEndpoints.TakeBotTurn, _gamesettings);
+    Task NewBotGameClick() => _hubConnection.SendAsync(ServerEndpoints.NewBotGame, _gamesettings);
+    Task NewHumanGameClick() => _hubConnection.SendAsync(ServerEndpoints.NewHumanGame, _gamesettings);
+    Task TakePlayerTurn(int i) => _hubConnection.SendAsync(ServerEndpoints.TakePlayerTurn, i, _gamesettings);
+
+
+    public async Task GameClick(int i)
+    {
+        if (!_gamesettings.Gameover && !_gamesettings.Botturn && string.IsNullOrEmpty(_gamesettings.Game[i]))
+        {
+            await TakePlayerTurn(i);
+        }
+    }
+
+}
+
