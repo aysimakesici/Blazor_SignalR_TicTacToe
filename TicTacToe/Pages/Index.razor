@@ -42,9 +42,13 @@
         background-color: #69e649;
         color: #fff;
     }
+    .btn-new-group{
+        padding: 10px 24px;
+
+    }
 </style>
 
-<h1>Tic Tac Toe</h1>
+<h1>TicTacToe</h1>
 <hr />
 
 <div class="container">
@@ -91,21 +95,43 @@
     </div>
     <div class="row new-game-buttons">
         <button id="btn-new-game" class="btn btn-primary m-1" @onclick="NewBotGameClick">New Player vs Bot Game</button>
-        <button id="btn-new-game" class="btn btn-primary m-1" @onclick="NewHumanGameClick">New Player vs Human Game</button>
+        <button id="btn-new-game" class="bbtn btn-primary m-1" @onclick="NewHumanGameClick">New Player vs Human Game</button>
     </div>
+       
+        <div class="row new-group-buttons">
+            <input type="text"
+                   id="groupName"
+                   class="form-control"
+                   placeholder="Enter Group Name"
+                   required />
+            <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroupClick">Add New Group</button>
+        </div>
+
+        <div class="row join-group-buttons">
+            <br />
+            <button id="btn-join-group" class="signal-button__btn button-one" @onclick="JoinGroupClick">Join Group</button>
+        </div>
+       
+        <div class="row leave-group-buttons">
+            <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroupClick">Leave Group</button>
+        </div>
+    
     <div class="row">
         <span>Connection State = @_hubConnection.State</span>
+       
     </div>
+</div>
     @*logging for debugging*@
     @*<div class="row" style="font-family: monospace;">
-        <ul>
-            @foreach (var message in messages)
-            {
-                <li>@message</li>
-            }
-        </ul>
-    </div>*@
-</div>
+            <ul>
+                @foreach (var message in messages)
+                {
+                    <li>@message</li>
+                }
+            </ul>
+        </div>*@
+    
+
 
 @code {
 
@@ -159,6 +185,12 @@
             StateHasChanged();
         });
 
+         _hubConnection.On<GameModel>(ClientEndpoints.NewHumanGame, (gamesettings) =>
+        {
+            _gamesettings = gamesettings;
+            StateHasChanged();
+        });
+
         _hubConnection.On<GameModel>(ClientEndpoints.NewBotGame, async (gamesettings) =>
         {
             this.messages.Clear();
@@ -191,7 +223,12 @@
     Task NewBotGameClick() => _hubConnection.SendAsync(ServerEndpoints.NewBotGame, _gamesettings);
     Task NewHumanGameClick() => _hubConnection.SendAsync(ServerEndpoints.NewHumanGame, _gamesettings);
     Task TakePlayerTurn(int i) => _hubConnection.SendAsync(ServerEndpoints.TakePlayerTurn, i, _gamesettings);
-
+    Task AddGroupClick() => _hubConnection.InvokeAsync("AddGroup","connectionId","groupName");
+    Task JoinGroupClick() => _hubConnection.InvokeAsync("JoinGroup","connectionId","groupName");
+    Task LeaveGroupClick() => _hubConnection.InvokeAsync("LeaveGroup","connectionId","groupName");
+     
+    
+   
 
     public async Task GameClick(int i)
     {

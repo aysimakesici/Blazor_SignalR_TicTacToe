@@ -1,25 +1,116 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TicTacToe.Data;
 using TicTacToe.Extensions;
+using TicTacToe.Helper;
+using TicTacToe.Response;
+using static TicTacToe.Enums.groupEnum;
 
 namespace TicTacToe.Hubs
 {
     public class GameHub : Hub
     {
+        public static List<Group> groups = new List<Group>();
+        public static List<User> clients = new List<User>();
         readonly GameModelService _service = new GameModelService();
         const string O = "O";
         const string X = "X";
-
+      
         public async Task NewHumanGame(GameModel gamesettings)
         {
             gamesettings = await _service.GetHumanGameBoardAsync();
             await Clients.All.SendAsync(ClientEndpoints.NewHumanGame, gamesettings);
         }
+
+        public async Task AddGroup(string connectionId, string groupName)
+        {
+            var groupAlreadyExists = true;
+            if (groups.Count >= (int)GroupEnum.maxGroupCount)
+            {
+                await Clients.All.SendAsync("groupLimitReached");
+                return;
+            }
+            // if there isn't already a group with that groupName
+            // create group and add the creator to the group
+            if (!GroupHelper.GroupExists(groups, groupName))
+            {
+                groupAlreadyExists = false;
+               // await Groups.AddToGroupAsync(connectionId, groupName);
+                groups = GroupHelper.AddGroup(groups, groupName, clients, connectionId);
+
+            }
+            await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
+           
+        }
+        public async Task JoinGroup(string connectionId, string groupName)
+        {
+            GroupResponse response = new GroupResponse();
+            User usr = new User();
+            var theGroup = groups.First();
+            if (GroupHelper.GroupExists(groups, groupName)) // if there's a group with that groupName :: aslında gerekli degil ama her ihtimale karsı
+            {
+                usr = UserHelper.FindUser(clients, connectionId);
+                theGroup = GroupHelper.FindGroup(groups, groupName);
+
+                response = new GroupResponse { ClientId = connectionId, GroupName = groupName, members = theGroup.members, ClienInGroup = false };
+
+                // if the user is not already in the group, add the user to the group
+
+                if (!UserHelper.UserExists(theGroup.members, usr))
+                {
+                    //await Groups.AddToGroupAsync(connectionId, groupName);
+                    theGroup.members.Add(usr);
+                    response.ClienInGroup = true;
+                }
+
+            }
+
+            await Clients.Caller.SendAsync("checkJoinGroup", JsonConvert.SerializeObject(response));
+            await Clients.OthersInGroup(groupName).SendAsync("notificationJoinGroup", usr.Username);
+        }
+        public async Task LeaveGroup(string connectionId, string groupName)
+        {
+            User usr = new User();
+            var theGroup = groups.First();
+            if (GroupHelper.GroupExists(groups, groupName)) // if there's a group with that groupName
+            {
+                usr = UserHelper.FindUser(clients, connectionId);
+                theGroup = GroupHelper.FindGroup(groups, groupName);
+                if (UserHelper.UserExists(theGroup.members, usr))
+                {
+                   // await Groups.RemoveFromGroupAsync(connectionId, groupName);
+                    theGroup.members.Remove(usr);
+                }
+
+            }
+            await Clients.Caller.SendAsync("checkLeaveGroup", groupName);
+            // there should be another function 
+            //await Clients.Group(groupName).SendAsync("notificationJoinGroup", usr.Username);
+        }
+
+        public async Task AddUserName(string userName, string connectionId)
+        {
+            var client = clients.FirstOrDefault(o => o.ConnectionId == connectionId);
+            if (string.IsNullOrEmpty(userName) || client == null || clients.Where(o => o.Username == userName).Count() > 0)
+            {
+                await Clients.Caller.SendAsync("checkUserName", userName);
+                return;
+            };
+            client.Username = userName;
+
+            await Clients.Caller.SendAsync("userJoined", userName);
+            await Clients.All.SendAsync("clients", clients.Where(o => o.Username != null).Select(o => o.Username));
+            await Clients.Others.SendAsync("notifyUserJoined", userName);
+
+        }
+
 
         public async Task NewBotGame(GameModel gamesettings)
         {
@@ -129,4 +220,6 @@ namespace TicTacToe.Hubs
             }              
         }
     }
+
+    
 }
