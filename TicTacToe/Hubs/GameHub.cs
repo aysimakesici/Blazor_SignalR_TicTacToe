@@ -47,7 +47,15 @@ namespace TicTacToe.Hubs
 
             }
             await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
-           
+            await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
+            List<string> groupNameList = new List<string>();
+            Group grp = new Group("a", "b");
+            Group grp2 = new Group("3", "4");
+            groupNameList.Add(grp.groupName);
+            groupNameList.Add(grp2.groupName);
+            await Clients.All.SendAsync("ListGroup", groupNameList);
+
+
         }
         public async Task JoinGroup(string connectionId, string groupName)
         {

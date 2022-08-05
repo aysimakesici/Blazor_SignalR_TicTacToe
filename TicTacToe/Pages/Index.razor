@@ -206,9 +206,22 @@
             _gamesettings = gamesettings;
             StateHasChanged();
         });
+         _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
+        {
+            foreach (var item in GroupList)
+            {
+                await this.Write($"gruplar= {item}");
 
+            }
+
+            var GroupList123 = GroupList;
+           // var a = "";
+
+        });
 
         await _hubConnection.StartAsync();
+
+
     }
 
     private async Task Write(string message)
