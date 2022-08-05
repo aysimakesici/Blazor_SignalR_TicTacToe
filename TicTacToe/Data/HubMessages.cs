@@ -11,7 +11,7 @@
         public const string ReceiveMessage = "ReceiveMessage";
         public const string EndTurn = "EndTurn";
         public const string GameOver = "GameOver";
-       
+        public const string ListGroup = "ListGroup";
     }
 
     public static class ServerEndpoints
