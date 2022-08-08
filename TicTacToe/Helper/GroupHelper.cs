@@ -11,7 +11,7 @@ namespace TicTacToe.Helper
         {
             public static bool GroupExists(List<Group> groups, string groupName)
             {
-                return groups.Where(o => o.getGroupName() == groupName).Any();
+                return groups.Where(o => o.groupName == groupName).Any();
             }
 
             public static List<Group> AddGroup(List<Group> groups, string groupName, List<User> clients, string connectionId)
@@ -25,7 +25,7 @@ namespace TicTacToe.Helper
 
             public static Group FindGroup(List<Group> groups, string groupName)
             {
-                return groups.Where(o => o.getGroupName() == groupName).FirstOrDefault();
+                return groups.Where(o => o.groupName == groupName).FirstOrDefault();
             }
 
 

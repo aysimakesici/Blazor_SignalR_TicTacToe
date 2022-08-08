@@ -17,24 +17,6 @@ namespace TicTacToe.Data
         {
             this.groupName = groupName;
             this.createdByConnId = createdByConnId;
-           
-        }
-
-        public string getGroupName()
-        {
-            return groupName;
-        }
-
-       
-       public string getCreatedByConnId()
-        {
-            return createdByConnId;
-        }
-        
-
-        public void setGroupName(string groupName)
-        {
-            this.groupName = groupName;
         }
 
         public void addMember(User user)
@@ -48,5 +30,8 @@ namespace TicTacToe.Data
         }
     }
 }
+
+
+    
     
 

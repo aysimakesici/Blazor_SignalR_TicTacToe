@@ -22,12 +22,26 @@ namespace TicTacToe.Hubs
         readonly GameModelService _service = new GameModelService();
         const string O = "O";
         const string X = "X";
-      
+
+
         public async Task NewHumanGame(GameModel gamesettings)
         {
             gamesettings = await _service.GetHumanGameBoardAsync();
             await Clients.All.SendAsync(ClientEndpoints.NewHumanGame, gamesettings);
+           
         }
+
+       
+     
+        public override Task OnConnectedAsync()
+        {
+            ConnectedUser.Ids.Add(Context.ConnectionId);
+            return base.OnConnectedAsync();
+
+        }
+
+
+
 
         public async Task AddGroup(string connectionId, string groupName)
         {
@@ -42,17 +56,17 @@ namespace TicTacToe.Hubs
             if (!GroupHelper.GroupExists(groups, groupName))
             {
                 groupAlreadyExists = false;
-               // await Groups.AddToGroupAsync(connectionId, groupName);
+                await Groups.AddToGroupAsync(connectionId, groupName);
                 groups = GroupHelper.AddGroup(groups, groupName, clients, connectionId);
 
             }
             await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
-            await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
             List<string> groupNameList = new List<string>();
-            Group grp = new Group("a", "b");
-            Group grp2 = new Group("3", "4");
-            groupNameList.Add(grp.groupName);
-            groupNameList.Add(grp2.groupName);
+            Group grp = new Group(groupName, connectionId);
+            //Group grp2 = new Group("3", "4");          
+            groups.Add(grp);
+            //groupNameList.Add(grp2.groupName);
+
             await Clients.All.SendAsync("ListGroup", groupNameList);
 
 

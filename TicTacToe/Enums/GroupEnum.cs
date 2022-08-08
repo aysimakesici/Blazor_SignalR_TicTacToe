@@ -10,7 +10,7 @@ namespace TicTacToe.Enums
 
             public enum GroupEnum
             {
-                maxGroupCount = 2
+                maxGroupCount = 10
             }
         }
 

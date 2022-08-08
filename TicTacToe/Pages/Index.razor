@@ -42,9 +42,9 @@
         background-color: #69e649;
         color: #fff;
     }
-    .btn-new-group{
-        padding: 10px 24px;
 
+    .btn-new-group {
+        padding: 10px 24px;
     }
 </style>
 
@@ -97,47 +97,48 @@
         <button id="btn-new-game" class="btn btn-primary m-1" @onclick="NewBotGameClick">New Player vs Bot Game</button>
         <button id="btn-new-game" class="bbtn btn-primary m-1" @onclick="NewHumanGameClick">New Player vs Human Game</button>
     </div>
-       
-        <div class="row new-group-buttons">
-            <input type="text"
-                   id="groupName"
-                   class="form-control"
-                   placeholder="Enter Group Name"
-                   required />
-            <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroupClick">Add New Group</button>
-        </div>
 
-        <div class="row join-group-buttons">
-            <br />
-            <button id="btn-join-group" class="signal-button__btn button-one" @onclick="JoinGroupClick">Join Group</button>
-        </div>
-       
-        <div class="row leave-group-buttons">
-            <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroupClick">Leave Group</button>
-        </div>
-    
+    <div class="row new-group-buttons">
+        <input type="text"
+               id="groupName"
+               @bind="@GroupName"
+               class="form-control"
+               placeholder="Enter Group Name"
+               required />
+        <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroupClick">Add New Group</button>
+    </div>
+
+    <div class="row join-group-buttons">
+        <br />
+        <button id="btn-join-group" class="signal-button__btn button-one" @onclick="JoinGroupClick">Join Group</button>
+    </div>
+
+    <div class="row leave-group-buttons">
+        <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroupClick">Leave Group</button>
+    </div>
+
     <div class="row">
         <span>Connection State = @_hubConnection.State</span>
-       
+
     </div>
 </div>
-    @*logging for debugging*@
-    @*<div class="row" style="font-family: monospace;">
-            <ul>
-                @foreach (var message in messages)
-                {
-                    <li>@message</li>
-                }
-            </ul>
-        </div>*@
-    
+@*logging for debugging*@
+@*<div class="row" style="font-family: monospace;">
+        <ul>
+            @foreach (var message in messages)
+            {
+                <li>@message</li>
+            }
+        </ul>
+    </div>*@
+
 
 
 @code {
 
     private HubConnection _hubConnection;
     private GameModel _gamesettings;
-
+    private string GroupName;
     protected List<string> messages = new List<string>();
 
     protected override async Task OnInitializedAsync()
@@ -185,11 +186,11 @@
             StateHasChanged();
         });
 
-         _hubConnection.On<GameModel>(ClientEndpoints.NewHumanGame, (gamesettings) =>
-        {
-            _gamesettings = gamesettings;
-            StateHasChanged();
-        });
+        _hubConnection.On<GameModel>(ClientEndpoints.NewHumanGame, (gamesettings) =>
+       {
+           _gamesettings = gamesettings;
+           StateHasChanged();
+       });
 
         _hubConnection.On<GameModel>(ClientEndpoints.NewBotGame, async (gamesettings) =>
         {
@@ -206,16 +207,16 @@
             _gamesettings = gamesettings;
             StateHasChanged();
         });
-         _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
+        _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
         {
-            foreach (var item in GroupList)
+            foreach (var grp in GroupList)
             {
-                await this.Write($"gruplar= {item}");
+                await this.Write($"gruplar= {grp}");
 
             }
 
             var GroupList123 = GroupList;
-           // var a = "";
+            // var a = "";
 
         });
 
@@ -230,18 +231,19 @@
         await this.JSRuntime.InvokeVoidAsync("console.log", message);
     }
 
+
     public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
     Task Send() => _hubConnection.SendAsync(ServerEndpoints.SendMessage, _gamesettings);
     Task DoBotTurn() => _hubConnection.SendAsync(ServerEndpoints.TakeBotTurn, _gamesettings);
     Task NewBotGameClick() => _hubConnection.SendAsync(ServerEndpoints.NewBotGame, _gamesettings);
     Task NewHumanGameClick() => _hubConnection.SendAsync(ServerEndpoints.NewHumanGame, _gamesettings);
     Task TakePlayerTurn(int i) => _hubConnection.SendAsync(ServerEndpoints.TakePlayerTurn, i, _gamesettings);
-    Task AddGroupClick() => _hubConnection.InvokeAsync("AddGroup","connectionId","groupName");
-    Task JoinGroupClick() => _hubConnection.InvokeAsync("JoinGroup","connectionId","groupName");
-    Task LeaveGroupClick() => _hubConnection.InvokeAsync("LeaveGroup","connectionId","groupName");
-     
-    
-   
+    Task AddGroupClick() => _hubConnection.InvokeAsync("AddGroup", "connectionId", GroupName);
+    Task JoinGroupClick() => _hubConnection.InvokeAsync("JoinGroup", "connectionId", "groupName");
+    Task LeaveGroupClick() => _hubConnection.InvokeAsync("LeaveGroup", "connectionId", "groupName");
+
+
+
 
     public async Task GameClick(int i)
     {
