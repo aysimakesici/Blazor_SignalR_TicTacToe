@@ -13,6 +13,7 @@ using TicTacToe.Helper;
 using TicTacToe.Response;
 using static TicTacToe.Enums.groupEnum;
 
+
 namespace TicTacToe.Hubs
 {
     public class GameHub : Hub
@@ -35,7 +36,8 @@ namespace TicTacToe.Hubs
      
         public override Task OnConnectedAsync()
         {
-            ConnectedUser.Ids.Add(Context.ConnectionId);
+            User newUser = new User(Context.ConnectionId);
+            clients.Add(newUser);
             return base.OnConnectedAsync();
 
         }
@@ -62,13 +64,18 @@ namespace TicTacToe.Hubs
             }
             await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
             List<string> groupNameList = new List<string>();
-            Group grp = new Group(groupName, connectionId);
+            //Group grp = new Group(groupName, connectionId);
             //Group grp2 = new Group("3", "4");          
-            groups.Add(grp);
+            //groups.Add(grp);
             //groupNameList.Add(grp2.groupName);
-
+            foreach (var group in groups)
+            {
+                groupNameList.Add(group.groupName);
+            }
+            
             await Clients.All.SendAsync("ListGroup", groupNameList);
-
+            Console.WriteLine("groups");
+           
 
         }
         public async Task JoinGroup(string connectionId, string groupName)
@@ -242,6 +249,5 @@ namespace TicTacToe.Hubs
             }              
         }
     }
-
-    
+   
 }
