@@ -1,0 +1,80 @@
+﻿@page "/addGameRoom"
+@using Extensions;
+@using System.Threading;
+@using Data;
+@using Microsoft.AspNetCore.SignalR.Client;
+@using Hubs;
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+<h1>Oyun Odası Ekle</h1>
+
+@*<p>Current count: @currentCount</p>*@
+<table class="table table-striped table-dark">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">First</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (_groupList!=null && _groupList.Count > 0)
+        {
+            @foreach (var item in _groupList)
+            {
+                <tr>
+                    <th scope="row">1</th>
+                    <td>@item</td>
+                </tr>
+            }
+        }
+
+        <tr>
+            <th scope="row">1</th>
+            <td>Mark</td>
+        </tr>
+        <tr>
+            <th scope="row">2</th>
+            <td>Jacob</td>
+        </tr>
+        <tr>
+            <th scope="row">3</th>
+            <td>Larry</td>
+        </tr>
+    </tbody>
+</table>
+<div style="max-width:200px" class="row new-group-buttons">
+    <input type="text"
+           id="groupName"
+           @bind="@GroupName"
+           class="form-control"
+           placeholder="Oda İsmi Giriniz"
+           required />
+    <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroup">Yeni Oda Ekle</button>
+</div>
+
+@code {
+    private HubConnection _hubConnection;
+    int currentCount = 0;
+    public string GroupName { get; set; }
+    public List<string> _groupList { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
+            .Build();
+
+        _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
+        {
+            _groupList = GroupList;
+
+        });
+        await _hubConnection.StartAsync();
+
+    }
+    Task AddGroup() => _hubConnection.SendAsync("AddGroup", _hubConnection.ConnectionId, @GroupName);
+
+    void IncrementCount()
+    {
+        currentCount++;
+    }
+}
