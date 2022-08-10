@@ -4,6 +4,7 @@
 @using Data;
 @using Microsoft.AspNetCore.SignalR.Client;
 @using Hubs;
+@using System.Web;
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 <h1>Oyun Odası Ekle</h1>
@@ -14,32 +15,20 @@
         <tr>
             <th scope="col">#</th>
             <th scope="col">First</th>
+            
+                @for (var i = 0; i < _groupList.Count; i++)
+                {
+                    var item = _groupList[i];
+                    <th scope="col">i</th>
+                    <th scope="col">@item</th>
+
+                }
+            
         </tr>
     </thead>
     <tbody>
-        @if (_groupList!=null && _groupList.Count > 0)
-        {
-            @foreach (var item in _groupList)
-            {
-                <tr>
-                    <th scope="row">1</th>
-                    <td>@item</td>
-                </tr>
-            }
-        }
+        @*@((MarkupString)CreateTable())*@
 
-        <tr>
-            <th scope="row">1</th>
-            <td>Mark</td>
-        </tr>
-        <tr>
-            <th scope="row">2</th>
-            <td>Jacob</td>
-        </tr>
-        <tr>
-            <th scope="row">3</th>
-            <td>Larry</td>
-        </tr>
     </tbody>
 </table>
 <div style="max-width:200px" class="row new-group-buttons">
@@ -49,13 +38,21 @@
            class="form-control"
            placeholder="Oda İsmi Giriniz"
            required />
-    <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroup">Yeni Oda Ekle</button>
+    <button id="" class="" @onclick="AddGroup">Yeni Oda Ekle</button>
+    <button id="btn-join-group" class="btn btn-primary m-1" @onclick="JoinGroup">Join Group</button>
+    <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroup">Leave Group</button>
+
+    
+
 </div>
+
+
+
 
 @code {
     private HubConnection _hubConnection;
     int currentCount = 0;
-    public string GroupName { get; set; }
+    public string? GroupName;
     public List<string> _groupList { get; set; }
     protected override async Task OnInitializedAsync()
     {
@@ -63,18 +60,40 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/gameHub"))
             .Build();
 
+
+
         _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
         {
             _groupList = GroupList;
-
+            //     await ListGroup();
         });
+        // await ListGroup();
         await _hubConnection.StartAsync();
+    //    CreateTable();
 
     }
+    //public string CreateTable()
+    //{
+    //    _hubConnection.SendAsync("ListGroup");
+    //    //List<string> groupList = new List<string>();  
+    //    string html = "";
+    //    if ( _groupList == null || _groupList.Count<0)
+    //    {
+    //        return "";
+    //    }
+    //    for (var i = 0; i < _groupList.Count; i++)
+    //    {
+    //        html += "<a href = 'test'>" + _groupList[i] + "</a> </br>";
+    //    }
+    //    return html;
+    //}
+
     Task AddGroup() => _hubConnection.SendAsync("AddGroup", _hubConnection.ConnectionId, @GroupName);
 
-    void IncrementCount()
-    {
-        currentCount++;
-    }
+    Task JoinGroup() => _hubConnection.SendAsync("JoinGroup", _hubConnection.ConnectionId, @GroupName);
+
+    Task LeaveGroup() => _hubConnection.SendAsync("LeaveGroup", _hubConnection.ConnectionId, @GroupName);
+    Task ListGroup() => _hubConnection.SendAsync("ListGroup");
+
+
 }

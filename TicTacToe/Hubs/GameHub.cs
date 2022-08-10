@@ -43,7 +43,7 @@ namespace TicTacToe.Hubs
         }
 
 
-
+        List<string> groupNameList = new List<string>();
 
         public async Task AddGroup(string connectionId, string groupName)
         {
@@ -63,7 +63,7 @@ namespace TicTacToe.Hubs
 
             }
             await Clients.All.SendAsync("checkAddGroup", groupAlreadyExists, groupName, connectionId);
-            List<string> groupNameList = new List<string>();
+           
             //Group grp = new Group(groupName, connectionId);
             //Group grp2 = new Group("3", "4");          
             //groups.Add(grp);
@@ -71,12 +71,26 @@ namespace TicTacToe.Hubs
             foreach (var group in groups)
             {
                 groupNameList.Add(group.groupName);
+                
             }
-            
-            await Clients.All.SendAsync("ListGroup", groupNameList);
-            Console.WriteLine("groups");
            
 
+
+            await Clients.All.SendAsync("ListGroup", groupNameList);
+            
+           
+
+        }
+        public List<string> ListGroup()
+        {
+          var groups1 = groups.Select(o => o.groupName).ToList();
+            // await Clients.Caller.SendAsync("ListGroups", JsonConvert.SerializeObject(clients));
+            //return context.Groups.Include(g => g.GroupMembers)
+            //                 .Include(g => g.Loans)
+            //                 .Include(g => g.Category).ToList();
+
+            //await Clients.All.SendAsync("ListGroup1", groups1);
+            return groups1;
         }
         public async Task JoinGroup(string connectionId, string groupName)
         {
@@ -97,6 +111,7 @@ namespace TicTacToe.Hubs
                     //await Groups.AddToGroupAsync(connectionId, groupName);
                     theGroup.members.Add(usr);
                     response.ClienInGroup = true;
+
                 }
 
             }

@@ -34,18 +34,12 @@
         margin-top: 1%;
     }
 
-    .new-game-buttons {
-        margin-top: 1%;
-    }
-
     .alert-custom {
         background-color: #69e649;
         color: #fff;
     }
 
-    .btn-new-group {
-        padding: 10px 24px;
-    }
+
 </style>
 
 <h1>TicTacToe</h1>
@@ -97,30 +91,44 @@
         <button id="btn-new-game" class="btn btn-primary m-1" @onclick="NewBotGameClick">New Player vs Bot Game</button>
         <button id="btn-new-game" class="bbtn btn-primary m-1" @onclick="NewHumanGameClick">New Player vs Human Game</button>
     </div>
+    <div>
+    <button id="btn-new-game" class="bbtn btn-primary m-1" @onclick="ListGroupClick">List Groups</button>
+    @*<div>
+        <button id="btn-new-game" class="bbtn btn-primary m-1" @onclick="ListGroupClick">List Groups</button>
+            <thead>
+                <tr>
+                    @if (_groupList != null && _groupList.Count > 0)*@
+    @*@foreach (var grp in groups)
+    {
 
-    <div class="row new-group-buttons">
-        <input type="text"
-               id="groupName"
-               @bind="@GroupName"
-               class="form-control"
-               placeholder="Enter Group Name"
-               required />
-        <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroupClick">Add New Group</button>
-    </div>
+        <th scope="col">@grp</th>
+    }
+    </tr>
+    </thead>*@
+</div>
+        @*<div class="row new-group-buttons">
+                <input type="text"
+                       id="groupName"
+                       @bind="@GroupName"
+                       class="form-control"
+                       placeholder="Enter Group Name"
+                       required />
+                <button id="btn-new-group" class="btn btn-primary m-1" @onclick="AddGroupClick">Add New Group</button>
+            </div>
 
-    <div class="row join-group-buttons">
-        <br />
-        <button id="btn-join-group" class="signal-button__btn button-one" @onclick="JoinGroupClick">Join Group</button>
-    </div>
+            <div class="row join-group-buttons">
+                <br />
+                <button id="btn-join-group" class="signal-button__btn button-one" @onclick="JoinGroupClick">Join Group</button>
+            </div>
 
-    <div class="row leave-group-buttons">
-        <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroupClick">Leave Group</button>
-    </div>
+            <div class="row leave-group-buttons">
+                <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroupClick">Leave Group</button>
+            </div>*@
 
-    <div class="row">
-        <span>Connection State = @_hubConnection.State</span>
+        <div class="row">
+            <span>Connection State = @_hubConnection.State</span>
 
-    </div>
+        </div>
 </div>
 @*logging for debugging*@
 @*<div class="row" style="font-family: monospace;">
@@ -135,6 +143,8 @@
 
 
 @code {
+      public List<string> _groupList { get; set; }
+     public static List<Group> groups = new List<Group>();
 
     private HubConnection _hubConnection;
     private GameModel _gamesettings;
@@ -165,6 +175,12 @@
                 await this.Write($"Turn {gamesettings.TurnCount} - Bot Turn Over.");
 
             }
+            
+        _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
+        {
+            _groupList = GroupList;
+
+        });
 
             await this.Write(Newtonsoft.Json.JsonConvert.SerializeObject(gamesettings.Game, Newtonsoft.Json.Formatting.None));
 
@@ -241,6 +257,7 @@
     Task AddGroupClick() => _hubConnection.InvokeAsync("AddGroup", "connectionId", GroupName);
     Task JoinGroupClick() => _hubConnection.InvokeAsync("JoinGroup", "connectionId", "groupName");
     Task LeaveGroupClick() => _hubConnection.InvokeAsync("LeaveGroup", "connectionId", "groupName");
+    Task ListGroupClick() => _hubConnection.InvokeAsync("ListGroup1");
 
 
 

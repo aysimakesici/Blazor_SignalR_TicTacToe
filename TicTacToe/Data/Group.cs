@@ -9,7 +9,7 @@ namespace TicTacToe.Data
 {
     public class Group
     {
-        public string groupName;
+        public string groupName { get; set; }
         public string createdByConnId;
         public List<User> members { get; set; } = new List<User>();
 
