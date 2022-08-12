@@ -13,18 +13,26 @@
 <table class="table table-striped table-dark">
     <thead>
         <tr>
-            <th scope="col">#</th>
-            <th scope="col">First</th>
-            
-                @for (var i = 0; i < _groupList.Count; i++)
-                {
-                    var item = _groupList[i];
-                    <th scope="col">i</th>
-                    <th scope="col">@item</th>
-
-                }
-            
+            <th scope="col">Oda İsmi</th>
+            <th scope="col">Doluluk</th>
         </tr>
+        <tr>
+            <th scope="col">İstanbul</th>
+            <th scope="col"> 0 / 2</th>
+            <th scope="col">
+                <button id="btn-join-group" class="btn btn-primary m-1" @onclick='(() => JoinGroup("İstanbul"))'>Gruba Gir</button>
+            </th>
+        </tr>
+
+        <tr>
+            <th scope="col">Ankara</th>
+            <th scope="col"> 0 / 2</th>
+            <th scope="col">
+                <button id="btn-join-group" class="btn btn-primary m-1" @onclick='(() => JoinGroup("Ankara"))'>Gruba Gir</button>
+            </th>
+        </tr>
+        "(() => GameClick(6))"
+
     </thead>
     <tbody>
         @*@((MarkupString)CreateTable())*@
@@ -38,20 +46,25 @@
            class="form-control"
            placeholder="Oda İsmi Giriniz"
            required />
-    <button id="" class="" @onclick="AddGroup">Yeni Oda Ekle</button>
-    <button id="btn-join-group" class="btn btn-primary m-1" @onclick="JoinGroup">Join Group</button>
+    @*<button id="" class="" @onclick="AddGroup">Yeni Oda Ekle</button>*@
+    @* <button id="btn-join-group" class="btn btn-primary m-1" @onclick="JoinGroup">Join Group</button>*@
+
     <button id="btn-leave-group" class="btn btn-primary m-1" @onclick="LeaveGroup">Leave Group</button>
+    <button id="btn-list-group" class="btn btn-primary m-1" @onclick="ListGroup1">List Group</button>
 
-    
-
+   
 </div>
 
 
 
 
 @code {
+
+
+
     private HubConnection _hubConnection;
-    int currentCount = 0;
+    // int groupCount = 0;
+    //int newGroupCount = 0;
     public string? GroupName;
     public List<string> _groupList { get; set; }
     protected override async Task OnInitializedAsync()
@@ -65,35 +78,24 @@
         _hubConnection.On<List<string>>(ClientEndpoints.ListGroup, async (GroupList) =>
         {
             _groupList = GroupList;
+
             //     await ListGroup();
         });
         // await ListGroup();
         await _hubConnection.StartAsync();
-    //    CreateTable();
+        //CreateTable();
 
     }
-    //public string CreateTable()
-    //{
-    //    _hubConnection.SendAsync("ListGroup");
-    //    //List<string> groupList = new List<string>();  
-    //    string html = "";
-    //    if ( _groupList == null || _groupList.Count<0)
-    //    {
-    //        return "";
-    //    }
-    //    for (var i = 0; i < _groupList.Count; i++)
-    //    {
-    //        html += "<a href = 'test'>" + _groupList[i] + "</a> </br>";
-    //    }
-    //    return html;
-    //}
 
     Task AddGroup() => _hubConnection.SendAsync("AddGroup", _hubConnection.ConnectionId, @GroupName);
 
-    Task JoinGroup() => _hubConnection.SendAsync("JoinGroup", _hubConnection.ConnectionId, @GroupName);
+    Task JoinGroup(string groupName) => _hubConnection.SendAsync("JoinGroup", _hubConnection.ConnectionId, groupName);
 
     Task LeaveGroup() => _hubConnection.SendAsync("LeaveGroup", _hubConnection.ConnectionId, @GroupName);
-    Task ListGroup() => _hubConnection.SendAsync("ListGroup");
+
+    Task ListGroup1() => _hubConnection.SendAsync("ListGroup1");
+
+
 
 
 }

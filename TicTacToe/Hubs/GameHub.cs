@@ -23,6 +23,8 @@ namespace TicTacToe.Hubs
         readonly GameModelService _service = new GameModelService();
         const string O = "O";
         const string X = "X";
+        public int NewGroupCount = 0;
+        public int newGroupCount = 0;
 
 
         public async Task NewHumanGame(GameModel gamesettings)
@@ -44,6 +46,7 @@ namespace TicTacToe.Hubs
 
 
         List<string> groupNameList = new List<string>();
+        
 
         public async Task AddGroup(string connectionId, string groupName)
         {
@@ -78,10 +81,10 @@ namespace TicTacToe.Hubs
 
             await Clients.All.SendAsync("ListGroup", groupNameList);
             
-           
+
 
         }
-        public List<string> ListGroup()
+        public List<string> ListGroup1()
         {
           var groups1 = groups.Select(o => o.groupName).ToList();
             // await Clients.Caller.SendAsync("ListGroups", JsonConvert.SerializeObject(clients));
@@ -92,6 +95,10 @@ namespace TicTacToe.Hubs
             //await Clients.All.SendAsync("ListGroup1", groups1);
             return groups1;
         }
+
+        
+
+
         public async Task JoinGroup(string connectionId, string groupName)
         {
             GroupResponse response = new GroupResponse();
@@ -113,9 +120,11 @@ namespace TicTacToe.Hubs
                     response.ClienInGroup = true;
 
                 }
+               
+
 
             }
-
+            await Clients.All.SendAsync("UpdateCount", NewGroupCount);
             await Clients.Caller.SendAsync("checkJoinGroup", JsonConvert.SerializeObject(response));
             await Clients.OthersInGroup(groupName).SendAsync("notificationJoinGroup", usr.Username);
         }
@@ -137,6 +146,13 @@ namespace TicTacToe.Hubs
             await Clients.Caller.SendAsync("checkLeaveGroup", groupName);
             // there should be another function 
             //await Clients.Group(groupName).SendAsync("notificationJoinGroup", usr.Username);
+        }
+        public async Task updateCount()
+        {
+            newGroupCount++;
+            int  groupCount = newGroupCount;
+           
+
         }
 
         public async Task AddUserName(string userName, string connectionId)
